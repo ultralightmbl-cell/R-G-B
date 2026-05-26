@@ -5,6 +5,8 @@
 document.addEventListener('DOMContentLoaded', () => {
   // DOM要素の取得
   const dropZone = document.getElementById('drop-zone');
+  const dropPlaceholder = document.getElementById('drop-placeholder');
+  const btnSelectFile = document.getElementById('btn-select-file');
   const fileInput = document.getElementById('file-input');
   const canvasContainer = document.getElementById('canvas-container');
   const previewCanvas = document.getElementById('preview-canvas');
@@ -13,6 +15,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnReset = document.getElementById('btn-reset');
   const btnDownload = document.getElementById('btn-download');
   const selectBlend = document.getElementById('select-blend');
+
+  // ハーフトーン要素の取得
+  const selectHalftone = document.getElementById('select-halftone');
+  const inputHalftoneSize = document.getElementById('input-halftone-size');
+  const valHalftoneSize = document.getElementById('val-halftone-size');
 
   // スライダーと数値表示要素の定義 (R, G, B)
   const sliders = {
@@ -58,8 +65,15 @@ document.addEventListener('DOMContentLoaded', () => {
     b: document.createElement('canvas')
   };
 
+  // 【超最適化キャッシュ】ハーフトーン前の純粋な各チャンネルのプレビュー用ピクセル配列
+  let rawPixels = {
+    r: null,
+    g: null,
+    b: null
+  };
+
   let isUpdatePending = false;
-  const MAX_PREVIEW_DIMENSION = 1000;
+  const MAX_PREVIEW_DIMENSION = 1000; // プレビュー表示を1000pxの美しいフル高解像度に戻します
 
   /* ==========================================================================
      1. イベント制御（クリック・ドラッグ＆ドロップ競合の完全排除）
@@ -94,10 +108,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ドロップゾーン自体がクリックされたとき（file-inputをクリックした場合は除く）
+  // 「ファイルを選択」ボタンがクリックされたとき
+  btnSelectFile.addEventListener('click', (e) => {
+    e.stopPropagation();
+    fileInput.click();
+  });
+
+  // ドロップゾーン自体がクリックされたとき（画像がまだ読み込まれていないときのみ起動）
   dropZone.addEventListener('click', (e) => {
-    if (e.target !== fileInput) {
-      fileInput.click();
+    if (!dropZone.classList.contains('has-image')) {
+      if (e.target !== fileInput && e.target !== btnSelectFile) {
+        fileInput.click();
+      }
     }
   });
 
@@ -108,26 +130,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // ハーフトーンスライダーの有効・無効状態を更新する制御関数
+  function updateHalftoneSliderState() {
+    if (selectHalftone.value === 'none') {
+      inputHalftoneSize.disabled = true;
+    } else {
+      if (originalImage) {
+        inputHalftoneSize.disabled = false;
+      }
+    }
+  }
+
   // 画像ファイルの読み込みと判定
   function handleImageFile(file) {
     const isImage = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(file.name);
     if (!isImage) {
-      alert('画像ファイルをアップロードしてください（PNG, JPEG, WebP等）');
+      alert('Please upload an image file (PNG, JPEG, WebP, etc.).');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      originalImage = new Image();
-      originalImage.onload = () => {
-        setupWorkspace();
-      };
-      originalImage.onerror = () => {
-        alert('画像の読み込みに失敗しました。');
-      };
-      originalImage.src = e.target.result;
+    const objectUrl = URL.createObjectURL(file);
+    originalImage = new Image();
+    originalImage.onload = () => {
+      setupWorkspace();
+      URL.revokeObjectURL(objectUrl);
     };
-    reader.readAsDataURL(file);
+    originalImage.onerror = () => {
+      alert('Failed to load image.');
+      URL.revokeObjectURL(objectUrl);
+    };
+    originalImage.src = objectUrl;
   }
 
   /* ==========================================================================
@@ -137,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function setupWorkspace() {
     if (!originalImage || originalImage.width === 0) return;
 
-    imageDimensions.textContent = `オリジナルサイズ: ${originalImage.width} × ${originalImage.height} px`;
+    imageDimensions.textContent = `ORIGINAL: ${originalImage.width} × ${originalImage.height} px`;
 
     // プレビュー表示用サイズ算出（縦横比維持、最大1000pxに収める）
     let w = originalImage.width;
@@ -166,9 +198,16 @@ document.addEventListener('DOMContentLoaded', () => {
       checkbox.disabled = false;
     });
     selectBlend.disabled = false;
+    selectHalftone.disabled = false;
+    updateHalftoneSliderState();
     btnReset.disabled = false;
     btnDownload.disabled = false;
+    dropPlaceholder.style.display = 'none';
     canvasContainer.style.display = 'block';
+    dropZone.classList.add('has-image');
+
+    // 初回のみ純粋なRGBピクセルデータをメモリに一括キャッシュ (ドラッグ中のgetImageDataを完全ゼロにする)
+    cacheRawRGBPixels();
 
     // RGB分離処理を実行
     processRGB();
@@ -184,16 +223,6 @@ document.addEventListener('DOMContentLoaded', () => {
   function processRGB() {
     if (!originalImage) return;
 
-    // 元画像を取得するオフスクリーンキャンバス
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = previewWidth;
-    tempCanvas.height = previewHeight;
-    const tempCtx = tempCanvas.getContext('2d');
-    tempCtx.drawImage(originalImage, 0, 0, previewWidth, previewHeight);
-
-    const imgData = tempCtx.getImageData(0, 0, previewWidth, previewHeight);
-    const data = imgData.data;
-
     // 各チャンネルキャンバスの初期設定
     Object.keys(channels).forEach(key => {
       channels[key].width = previewWidth;
@@ -202,35 +231,152 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const ctxR = channels.r.getContext('2d');
     const ctxG = channels.g.getContext('2d');
-    const ctxB = channels.b.getContext('2d');
+    const gridSize = parseInt(inputHalftoneSize.value, 10);
+    const halftoneType = selectHalftone.value;
 
-    // 【重要：透過＆元のアルファ保持モデルへの変更】
-    // 完全に透明（R:0, G:0, B:0, A:0）な状態で新規作成します
-    const rData = ctxR.createImageData(previewWidth, previewHeight);
-    const gData = ctxG.createImageData(previewWidth, previewHeight);
-    const bData = ctxB.createImageData(previewWidth, previewHeight);
+    if (halftoneType !== 'none' && gridSize >= 4) {
+      // ハーフトーン適用時は、メモリにキャッシュした配列から直接サンプリングして描画 (超軽量)
+      applyHalftone(channels.r, 'r', '#ff0000', 75, gridSize, previewWidth, previewHeight);
+      applyHalftone(channels.g, 'g', '#00ff00', 15, gridSize, previewWidth, previewHeight);
+      applyHalftone(channels.b, 'b', '#0000ff', 45, gridSize, previewWidth, previewHeight);
+    } else {
+      // ハーフトーンなしの時は、キャッシュから一瞬でキャンバスにピクセルを復元するだけ
+      restoreChannelsFromCache();
+    }
+  }
 
-    const len = data.length;
+  /* ==========================================================================
+     3.1 高精度 RGB 分離＆ピクセルキャッシュシステム (超爆速化コア)
+     ========================================================================== */
 
-    // 各チャンネルのピクセルデータを抽出（元の画像の透明度/アルファ値をそのまま引き継ぐ）
-    for (let i = 0; i < len; i += 4) {
-      const alpha = data[i+3];
-      if (alpha > 0) {
-        rData.data[i] = data[i];       // 赤成分
-        rData.data[i+3] = alpha;       // 元のアルファ値
-        
-        gData.data[i+1] = data[i+1];   // 緑成分
-        gData.data[i+3] = alpha;       // 元のアルファ値
-        
-        bData.data[i+2] = data[i+2];   // 青成分
-        bData.data[i+3] = alpha;       // 元のアルファ値
+  function cacheRawRGBPixels() {
+    if (!originalImage) return;
+
+    const w = previewWidth;
+    const h = previewHeight;
+
+    // R, G, B それぞれのピクセルデータをキャッシュするためのオフスクリーンキャンバス
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = w;
+    tempCanvas.height = h;
+    const tempCtx = tempCanvas.getContext('2d');
+
+    // Rチャンネルキャッシュ
+    tempCtx.clearRect(0, 0, w, h);
+    tempCtx.drawImage(originalImage, 0, 0, w, h);
+    tempCtx.globalCompositeOperation = 'source-in';
+    tempCtx.fillStyle = '#ff0000';
+    tempCtx.fillRect(0, 0, w, h);
+    tempCtx.globalCompositeOperation = 'multiply';
+    tempCtx.drawImage(originalImage, 0, 0, w, h);
+    tempCtx.globalCompositeOperation = 'source-over';
+    rawPixels.r = tempCtx.getImageData(0, 0, w, h).data;
+
+    // Gチャンネルキャッシュ
+    tempCtx.clearRect(0, 0, w, h);
+    tempCtx.drawImage(originalImage, 0, 0, w, h);
+    tempCtx.globalCompositeOperation = 'source-in';
+    tempCtx.fillStyle = '#00ff00';
+    tempCtx.fillRect(0, 0, w, h);
+    tempCtx.globalCompositeOperation = 'multiply';
+    tempCtx.drawImage(originalImage, 0, 0, w, h);
+    tempCtx.globalCompositeOperation = 'source-over';
+    rawPixels.g = tempCtx.getImageData(0, 0, w, h).data;
+
+    // Bチャンネルキャッシュ
+    tempCtx.clearRect(0, 0, w, h);
+    tempCtx.drawImage(originalImage, 0, 0, w, h);
+    tempCtx.globalCompositeOperation = 'source-in';
+    tempCtx.fillStyle = '#0000ff';
+    tempCtx.fillRect(0, 0, w, h);
+    tempCtx.globalCompositeOperation = 'multiply';
+    tempCtx.drawImage(originalImage, 0, 0, w, h);
+    tempCtx.globalCompositeOperation = 'source-over';
+    rawPixels.b = tempCtx.getImageData(0, 0, w, h).data;
+  }
+
+  function restoreChannelsFromCache() {
+    const w = previewWidth;
+    const h = previewHeight;
+
+    ['r', 'g', 'b'].forEach(key => {
+      const canvas = channels[key];
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, w, h);
+      
+      const imgData = ctx.createImageData(w, h);
+      if (rawPixels[key]) {
+        imgData.data.set(rawPixels[key]);
+        ctx.putImageData(imgData, 0, 0);
+      }
+    });
+  }
+
+  /* ==========================================================================
+     3.5 高度な斜め回転ハーフトーン (網点・万線) アルゴリズム
+     ========================================================================== */
+
+  function applyHalftone(canvas, channelKey, colorHex, angleDegrees, gridSize, w, h, customData = null) {
+    const ctx = canvas.getContext('2d');
+    
+    // customDataがあればそれを使用（高解像度保存用）、なければキャッシュされた配列を直接参照 (プレビュー用)
+    const data = customData ? customData : rawPixels[channelKey];
+    if (!data) return;
+
+    // 描画先キャンバスをクリア
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = colorHex;
+
+    // 角度をラジアンに変換
+    const angle = (angleDegrees * Math.PI) / 180;
+    const cosA = Math.cos(angle);
+    const sinA = Math.sin(angle);
+
+    const centerX = w / 2;
+    const centerY = h / 2;
+
+    const diag = Math.sqrt(w * w + h * h);
+    const startX = -diag / 2;
+    const endX = diag / 2;
+    const startY = -diag / 2;
+    const endY = diag / 2;
+
+    // パスの一括処理開始
+    ctx.beginPath();
+
+    for (let gx = startX; gx < endX; gx += gridSize) {
+      for (let gy = startY; gy < endY; gy += gridSize) {
+        // 回転座標系 (gx, gy) から直交座標系 (rx, ry) へマッピング
+        const rx = gx * cosA - gy * sinA + centerX;
+        const ry = gx * sinA + gy * cosA + centerY;
+
+        const ix = Math.round(rx);
+        const iy = Math.round(ry);
+
+        if (ix >= 0 && ix < w && iy >= 0 && iy < h) {
+          const idx = (iy * w + ix) * 4;
+          const alpha = data[idx + 3];
+          if (alpha === 0) continue;
+
+          // 輝度のサンプリング
+          let val = 0;
+          if (channelKey === 'r') val = data[idx];
+          else if (channelKey === 'g') val = data[idx + 1];
+          else if (channelKey === 'b') val = data[idx + 2];
+
+          const ratio = val / 255;
+          if (ratio < 0.05) continue; // 暗すぎる部分は描画しない
+
+          // 網点 (ドット) 描画 - 常に美しい円(arc)で滑らかに表現
+          const maxRadius = (gridSize / 2) * 1.25;
+          const r = maxRadius * ratio;
+          ctx.moveTo(rx + r, ry);
+          ctx.arc(rx, ry, r, 0, Math.PI * 2);
+        }
       }
     }
 
-    // 描画バッファへピクセルデータを適用
-    ctxR.putImageData(rData, 0, 0);
-    ctxG.putImageData(gData, 0, 0);
-    ctxB.putImageData(bData, 0, 0);
+    ctx.fill();
   }
 
   /* ==========================================================================
@@ -255,8 +401,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // ★重要：ブレンドモードを一旦標準に戻し、キャンバスを「完全透明」でクリアする！
     // 描画先が不透明な黒の状態でスクリーン/加算を重ねると、アルファ値の計算の都合上、
     // 光の純粋な加算が行われず、色が極めて暗く濁って（くすんで）しまいます。
+    // 背景色の決定 (screen/lighter は黒背景、difference は白背景にして極彩色反転を起こす)
     ctx.globalCompositeOperation = 'source-over';
-    ctx.clearRect(0, 0, previewWidth, previewHeight);
+    if (selectBlend.value === 'difference') {
+      ctx.fillStyle = '#ffffff';
+    } else {
+      ctx.fillStyle = '#000000';
+    }
+    ctx.fillRect(0, 0, previewWidth, previewHeight);
 
     // 各スライダー値（ズレ値）を取得
     const rx = parseInt(sliders.rx.value, 10);
@@ -266,21 +418,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const bx = parseInt(sliders.bx.value, 10);
     const by = parseInt(sliders.by.value, 10);
 
-    // 表示が有効なレイヤーのうち、最初に描画するものを決定する
-    // (1層目はブレンドする必要がないため、source-over（標準）で100%鮮明に描画します)
+    // 表示が有効なレイヤーを抽出
     const layers = [];
     if (visibilityInputs.r.checked) layers.push({ key: 'r', x: rx, y: ry, opacity: parseInt(sliders.ro.value, 10) / 100 });
     if (visibilityInputs.g.checked) layers.push({ key: 'g', x: gx, y: gy, opacity: parseInt(sliders.go.value, 10) / 100 });
     if (visibilityInputs.b.checked) layers.push({ key: 'b', x: bx, y: by, opacity: parseInt(sliders.bo.value, 10) / 100 });
 
-    layers.forEach((layer, index) => {
-      if (index === 0) {
-        // 1層目はそのまま重ねずに描画（極めて鮮明な発色のベースになります）
-        ctx.globalCompositeOperation = 'source-over';
-      } else {
-        // 2層目以降は、指定された重なり効果 (スクリーン/加算) でブレンド
-        ctx.globalCompositeOperation = selectBlend.value;
-      }
+    layers.forEach((layer) => {
+      // 指定されたブレンドモード（スクリーン/差の絶対値）を適用する
+      ctx.globalCompositeOperation = selectBlend.value;
       ctx.globalAlpha = layer.opacity;
       ctx.drawImage(channels[layer.key], layer.x, layer.y);
     });
@@ -309,7 +455,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!originalImage) return;
 
     btnDownload.disabled = true;
-    btnDownload.textContent = '保存中...';
+    btnDownload.textContent = 'SAVING...';
 
     setTimeout(() => {
       const origW = originalImage.width;
@@ -320,15 +466,6 @@ document.addEventListener('DOMContentLoaded', () => {
       outputCanvas.width = origW;
       outputCanvas.height = origH;
       const outCtx = outputCanvas.getContext('2d');
-
-      // 高解像度用の一次描画から高精度ピクセル情報を抽出
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = origW;
-      tempCanvas.height = origH;
-      const tempCtx = tempCanvas.getContext('2d');
-      tempCtx.drawImage(originalImage, 0, 0, origW, origH);
-      const imgData = tempCtx.getImageData(0, 0, origW, origH);
-      const data = imgData.data;
 
       // 高解像度用の3チャンネルキャンバス生成
       const hResChannels = {
@@ -346,34 +483,55 @@ document.addEventListener('DOMContentLoaded', () => {
       const ctxG = hResChannels.g.getContext('2d');
       const ctxB = hResChannels.b.getContext('2d');
 
-      const rData = ctxR.createImageData(origW, origH);
-      const gData = ctxG.createImageData(origW, origH);
-      const bData = ctxB.createImageData(origW, origH);
+      // --- GPUによる超高速高解像度RGB分解（シンプル乗算方式） ---
+      // R
+      ctxR.clearRect(0, 0, origW, origH);
+      ctxR.drawImage(originalImage, 0, 0, origW, origH);
+      ctxR.globalCompositeOperation = 'multiply';
+      ctxR.fillStyle = '#ff0000';
+      ctxR.fillRect(0, 0, origW, origH);
+      ctxR.globalCompositeOperation = 'source-over';
 
-      const len = data.length;
+      // G
+      ctxG.clearRect(0, 0, origW, origH);
+      ctxG.drawImage(originalImage, 0, 0, origW, origH);
+      ctxG.globalCompositeOperation = 'multiply';
+      ctxG.fillStyle = '#00ff00';
+      ctxG.fillRect(0, 0, origW, origH);
+      ctxG.globalCompositeOperation = 'source-over';
 
-      // 高解像度保存時も同様に透過＆元のアルファを保持
-      for (let i = 0; i < len; i += 4) {
-        const alpha = data[i+3];
-        if (alpha > 0) {
-          rData.data[i] = data[i];
-          rData.data[i+3] = alpha;
-          
-          gData.data[i+1] = data[i+1];
-          gData.data[i+3] = alpha;
-          
-          bData.data[i+2] = data[i+2];
-          bData.data[i+3] = alpha;
-        }
+      // B
+      ctxB.clearRect(0, 0, origW, origH);
+      ctxB.drawImage(originalImage, 0, 0, origW, origH);
+      ctxB.globalCompositeOperation = 'multiply';
+      ctxB.fillStyle = '#0000ff';
+      ctxB.fillRect(0, 0, origW, origH);
+      ctxB.globalCompositeOperation = 'source-over';
+
+      // --- 高解像度保存時も同様にハーフトーンを適用 ---
+      const baseGridSize = parseInt(inputHalftoneSize.value, 10);
+      const halftoneType = selectHalftone.value;
+      if (halftoneType !== 'none' && baseGridSize >= 4) {
+        const hResGridSize = Math.round(baseGridSize * scale);
+        
+        // 高解像度保存時のみ一時的に高精度ピクセルデータを抽出して適用 (これ以外のドラッグ時はキャッシュを参照するため爆速)
+        const rData = ctxR.getImageData(0, 0, origW, origH).data;
+        const gData = ctxG.getImageData(0, 0, origW, origH).data;
+        const bData = ctxB.getImageData(0, 0, origW, origH).data;
+
+        applyHalftone(hResChannels.r, 'r', '#ff0000', 75, hResGridSize, origW, origH, rData);
+        applyHalftone(hResChannels.g, 'g', '#00ff00', 15, hResGridSize, origW, origH, gData);
+        applyHalftone(hResChannels.b, 'b', '#0000ff', 45, hResGridSize, origW, origH, bData);
       }
 
-      ctxR.putImageData(rData, 0, 0);
-      ctxG.putImageData(gData, 0, 0);
-      ctxB.putImageData(bData, 0, 0);
-
-      // 高解像度保存時も同様にアルファ干渉を排除して合成
+      // 高解像度保存時も同様に、ブレンドモードに合わせて背景色を切り替えてから合成
       outCtx.globalCompositeOperation = 'source-over';
-      outCtx.clearRect(0, 0, origW, origH);
+      if (selectBlend.value === 'difference') {
+        outCtx.fillStyle = '#ffffff';
+      } else {
+        outCtx.fillStyle = '#000000';
+      }
+      outCtx.fillRect(0, 0, origW, origH);
 
       // ズレ幅もオリジナルのスケールに合わせて増倍
       const rx = Math.round(parseInt(sliders.rx.value, 10) * scale);
@@ -388,22 +546,15 @@ document.addEventListener('DOMContentLoaded', () => {
       if (visibilityInputs.g.checked) hResLayers.push({ key: 'g', x: gx, y: gy, opacity: parseInt(sliders.go.value, 10) / 100 });
       if (visibilityInputs.b.checked) hResLayers.push({ key: 'b', x: bx, y: by, opacity: parseInt(sliders.bo.value, 10) / 100 });
 
-      hResLayers.forEach((layer, index) => {
-        if (index === 0) {
-          outCtx.globalCompositeOperation = 'source-over';
-        } else {
-          outCtx.globalCompositeOperation = selectBlend.value;
-        }
+      hResLayers.forEach((layer) => {
+        outCtx.globalCompositeOperation = selectBlend.value;
         outCtx.globalAlpha = layer.opacity;
         outCtx.drawImage(hResChannels[layer.key], layer.x, layer.y);
       });
 
-      // ★重要：最後に黒背景を下に敷く（destination-over）ことで、
-      // 途中のアルファ計算を一切濁らせずに、完全な黒背景画像としてPNG化します。
+      // 後処理（透明度とブレンドモードの初期化）
       outCtx.globalAlpha = 1.0;
-      outCtx.globalCompositeOperation = 'destination-over';
-      outCtx.fillStyle = '#000000';
-      outCtx.fillRect(0, 0, origW, origH);
+      outCtx.globalCompositeOperation = 'source-over';
 
       // ダウンロード保存処理
       const dataUrl = outputCanvas.toDataURL('image/png');
@@ -413,7 +564,7 @@ document.addEventListener('DOMContentLoaded', () => {
       link.click();
 
       btnDownload.disabled = false;
-      btnDownload.textContent = '保存する';
+      btnDownload.textContent = 'SAVE';
     }, 150);
   }
 
@@ -448,6 +599,26 @@ document.addEventListener('DOMContentLoaded', () => {
       checkbox.checked = true;
     });
     selectBlend.value = 'screen';
+    selectHalftone.value = 'none';
+    inputHalftoneSize.value = 10;
+    valHalftoneSize.textContent = '10';
+    updateHalftoneSliderState();
+    processRGB();
+    requestRender();
+  });
+
+  // ハーフトーン選択イベント
+  selectHalftone.addEventListener('change', () => {
+    updateHalftoneSliderState();
+    processRGB();
+    requestRender();
+  });
+
+  // ハーフトーンサイズ変更イベント
+  inputHalftoneSize.addEventListener('input', () => {
+    const val = parseInt(inputHalftoneSize.value, 10);
+    valHalftoneSize.textContent = val;
+    processRGB();
     requestRender();
   });
 

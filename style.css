@@ -1,66 +1,530 @@
 /* ==========================================================================
-   【ステップ1】RGB Shifter用 最小構成ダークスタイルシート
+   【プレミアム】RGB Shifter用 先端ライトデザインスタイルシート (白ベース ＆ 黒アジャスト)
    ========================================================================== */
 
+/* 全体設定・配色システム (クリーンなライトモード) */
+:root {
+  --bg-color: #f5f5f7;
+  --bg-gradient: linear-gradient(180deg, #ffffff 0%, #eeeff4 100%);
+  --panel-bg: rgba(255, 255, 255, 0.85);
+  --panel-border: rgba(0, 0, 0, 0.06);
+  --text-main: #1d1d1f;
+  --text-sub: #86868b;
+  
+  /* チャンネルごとの鮮やかなネオンカラー（白背景で視認性の高いもの） */
+  --color-red: #ff3b30;
+  --color-red-glow: rgba(255, 59, 48, 0.08);
+  --color-green: #34c759;
+  --color-green-glow: rgba(52, 199, 89, 0.08);
+  --color-blue: #007aff;
+  --color-blue-glow: rgba(0, 122, 255, 0.08);
+  
+  --primary-gradient: linear-gradient(135deg, #5856d6, #007aff);
+  --primary-glow: rgba(88, 86, 214, 0.25);
+  --font-family: 'Outfit', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  
+  --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
 body {
-  font-family: sans-serif;
-  padding: 20px;
-  line-height: 1.5;
-  background-color: #111116; /* 加法混色に必須の暗い背景 */
-  color: #eeeeee;
+  font-family: var(--font-family);
+  background-color: var(--bg-color);
+  background-image: var(--bg-gradient);
+  background-attachment: fixed;
+  color: var(--text-main);
+  min-height: 100vh;
+  padding: 40px 20px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
-h1, p {
-  color: #ffffff;
+/* スクロールバーのカスタマイズ */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
 }
 
-.drop-zone {
-  border: 3px dashed #444455;
-  padding: 40px;
+/* コンテナ & レイアウト */
+.app-container {
+  max-width: 1360px;
+  margin: 0 auto;
+}
+
+.app-header {
+  margin-bottom: 35px;
   text-align: center;
-  background-color: #1a1a24;
+}
+
+.main-title {
+  font-family: 'Montserrat', "Outfit", sans-serif;
+  font-size: 3.3rem; /* 級数を約5px（0.5rem）引き下げ */
+  font-weight: 700; /* 強力なアイデンティティを生む BOLD (ウェイト 700) */
+  color: #000000;
+  letter-spacing: 0.1em; /* 太字の力強さに合わせた美しいカーニング */
+  text-transform: uppercase;
+  margin-right: -0.1em; /* 完全な中央寄せのためにletter-spacing分を相殺 */
+  display: inline-block;
+}
+
+.workspace-layout {
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+}
+
+/* 左側：統合ワークスペース（プレビュー ＆ ドロップエリア） */
+.workspace-left {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: center; /* 横幅にアジャストしたキャンバスを美しく中央寄せ */
+  align-items: flex-start;
+}
+
+/* 画像読み込み前のドロップエリア */
+.drop-zone {
+  border: 3px dashed rgba(0, 0, 0, 0.12);
+  border-radius: 20px;
+  padding: 50px;
+  text-align: center;
+  background-color: rgba(255, 255, 255, 0.6);
   cursor: pointer;
-  margin-bottom: 20px;
-  color: #aaaaaa;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+  transition: var(--transition);
+  min-height: 450px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.02);
+  backdrop-filter: blur(8px);
+  width: 100%;
+}
+
+.drop-zone:hover {
+  border-color: rgba(0, 0, 0, 0.25);
+  background-color: rgba(255, 255, 255, 0.9);
 }
 
 .drop-zone.drag-over {
-  border-color: #5555ff;
-  background-color: #222235;
-  color: #ffffff;
+  border-color: var(--color-blue);
+  background-color: rgba(0, 122, 255, 0.03);
+  box-shadow: 0 0 30px rgba(0, 122, 255, 0.1), inset 0 0 20px rgba(0, 122, 255, 0.05);
 }
 
-.control-group {
-  padding: 10px;
-  border: 1px solid #444;
-  background-color: #2a2a35;
-  color: #ffffff;
+/* 画像表示中のスタイル：周囲の点線だけを綺麗に残し、画像サイズに完璧にアジャストさせる */
+.drop-zone.has-image {
+  padding: 0; /* 余白をゼロにしてキャンバスと完全に密着させます */
+  min-height: auto;
+  background-color: transparent; /* ドロップ領域自体は透明に */
+  border: 2px dashed rgba(0, 0, 0, 0.15); /* 周囲の美しい点線枠だけをキープ */
+  border-radius: 12px;
+  cursor: default;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08); /* 浮かび上がる美しいシャドウ */
+  display: inline-block; /* コンテナサイズを内側のキャンバスサイズにアジャスト */
+  overflow: hidden; /* キャンバスの角丸クリッピング用 */
+  width: auto;
 }
 
-.control-group h4 {
-  margin-top: 0;
-  margin-bottom: 8px;
+.drop-zone.has-image.drag-over {
+  border-color: var(--color-blue);
+  box-shadow: 0 0 30px rgba(0, 122, 255, 0.2);
+}
+
+/* プレースホルダーのインナーデザイン */
+.placeholder-icon {
+  color: var(--text-sub);
+  margin-bottom: 15px;
+  transition: var(--transition);
+}
+.drop-zone:hover .placeholder-icon {
+  color: var(--text-main);
+  transform: translateY(-3px);
+}
+
+.placeholder-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+
+.placeholder-or {
+  color: rgba(0, 0, 0, 0.25);
+  font-size: 0.9rem;
+  margin: 8px 0;
+}
+
+.btn-select {
+  margin-top: 5px;
 }
 
 #preview-canvas {
-  background-color: #000000; /* キャンバスのベースは完全な暗闇 */
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  background-color: #000000; /* キャンバス自体の背景は漆黒 */
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
 }
 
-button {
-  padding: 6px 12px;
-  background: #444;
-  color: #fff;
-  border: 1px solid #555;
+.dimensions-tag {
+  margin-top: 14px;
+  font-size: 0.85rem;
+  color: var(--text-sub);
+  display: inline-block;
+  font-weight: 500;
+  margin-bottom: 15px;
+}
+
+
+/* 右側：コントロールパネル（グラスモルフィズム ＆ 白基調） */
+.workspace-right {
+  width: 380px;
+  flex-shrink: 0;
+}
+
+.control-panel {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.panel-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+/* 区切り線 */
+.divider {
+  border: none;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.06);
+  margin: 20px 0;
+}
+
+/* ボタン（ライトテーマ用） */
+.btn {
+  font-family: var(--font-family);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid transparent;
   cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-button:hover:not(:disabled) {
-  background: #555;
-}
-
-button:disabled {
-  opacity: 0.3;
+.btn:disabled {
+  opacity: 0.25;
   cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--primary-gradient);
+  color: #ffffff;
+  box-shadow: 0 4px 15px var(--primary-glow);
+}
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px var(--primary-glow);
+}
+.btn-primary:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn-secondary {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--text-main);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+.btn-secondary:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+.btn-secondary:active:not(:disabled) {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+/* フォーム・コントローラー項目 */
+.control-item {
+  margin-bottom: 16px;
+}
+
+.control-item:last-child {
+  margin-bottom: 0;
+}
+
+.control-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-sub);
+  margin-bottom: 8px;
+}
+
+/* スタイリッシュなセレクトボックス (ライトテーマ) */
+.select-wrapper {
+  position: relative;
+}
+
+.select-wrapper::after {
+  content: '';
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+select {
+  width: 100%;
+  padding: 10px 14px;
+  font-family: var(--font-family);
+  font-size: 0.9rem;
+  color: var(--text-main);
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 10px;
+  appearance: none;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+select:focus {
+  outline: none;
+  border-color: var(--color-blue);
+  box-shadow: 0 0 10px rgba(0, 122, 255, 0.1);
+}
+
+select:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* カスタムスライダーヘッダー */
+.slider-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-sub);
+  margin-bottom: 6px;
+}
+
+.value-display {
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+/* カスタムスライダー (Range input) */
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 2px;
+  outline: none;
+  transition: var(--transition);
+}
+
+input[type="range"]:disabled {
+  opacity: 0.3;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+/* 各色チャンネルカード (ライトテーマ用の極薄枠線) */
+.channel-card {
+  background: rgba(0, 0, 0, 0.01);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  border-radius: 14px;
+  padding: 16px;
+  margin-top: 15px;
+  transition: var(--transition);
+}
+
+.channel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.channel-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+/* 各チャンネル固有のつまみカラー */
+.card-red {
+  border-left: 3px solid var(--color-red);
+}
+.card-red .channel-title { color: var(--color-red); }
+.card-red input[type="range"]::-webkit-slider-thumb {
+  background: var(--color-red);
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--color-red-glow);
+}
+.card-red input[type="range"]::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 10px var(--color-red);
+}
+
+.card-green {
+  border-left: 3px solid var(--color-green);
+}
+.card-green .channel-title { color: var(--color-green); }
+.card-green input[type="range"]::-webkit-slider-thumb {
+  background: var(--color-green);
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--color-green-glow);
+}
+.card-green input[type="range"]::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 10px var(--color-green);
+}
+
+.card-blue {
+  border-left: 3px solid var(--color-blue);
+}
+.card-blue .channel-title { color: var(--color-blue); }
+.card-blue input[type="range"]::-webkit-slider-thumb {
+  background: var(--color-blue);
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--color-blue-glow);
+}
+.card-blue input[type="range"]::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 10px var(--color-blue);
+}
+
+.channel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* スタイリッシュなトグルスイッチ (ライトテーマ) */
+.toggle-switch {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-sub);
+  user-select: none;
+}
+
+.toggle-switch input {
+  display: none;
+}
+
+.toggle-slider {
+  position: relative;
+  display: inline-block;
+  width: 32px;
+  height: 18px;
+  background-color: rgba(0, 0, 0, 0.08);
+  border-radius: 9px;
+  margin-right: 8px;
+  transition: var(--transition);
+  border: 1px solid rgba(0, 0, 0, 0.02);
+}
+
+.toggle-slider::before {
+  content: "";
+  position: absolute;
+  height: 12px;
+  width: 12px;
+  left: 2px;
+  bottom: 2px;
+  background-color: #a0a0b0;
+  border-radius: 50%;
+  transition: var(--transition);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(14px);
+  background-color: #ffffff;
+}
+
+/* チャンネルごとのトグルONの背景発光 */
+.card-red .toggle-switch input:checked + .toggle-slider {
+  background-color: var(--color-red);
+}
+.card-green .toggle-switch input:checked + .toggle-slider {
+  background-color: var(--color-green);
+}
+.card-blue .toggle-switch input:checked + .toggle-slider {
+  background-color: var(--color-blue);
+}
+
+.toggle-switch input:disabled + .toggle-slider {
+  opacity: 0.3;
+}
+
+
+/* レスポンシブ対応 */
+@media (max-width: 1100px) {
+  .workspace-layout {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .workspace-right {
+    width: 100%;
+  }
+  
+  .drop-zone {
+    min-height: 350px;
+  }
 }
