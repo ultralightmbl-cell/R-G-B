@@ -564,13 +564,13 @@ input[type="range"]::-webkit-slider-thumb:hover {
     height: calc(100vh - 60px); /* ヘッダーを除いた全画面高さ */
   }
 
-  /* 上部：固定プレビューエリア (画面の38%) */
+  /* 上部：固定プレビューエリア (画面の52%に拡張して迫力をアップ！) */
   .workspace-left {
     width: 100%;
-    height: 38vh;
-    max-height: 38vh;
+    height: 52vh;
+    max-height: 52vh;
     background: #ffffff;
-    padding: 12px;
+    padding: 10px;
     z-index: 100;
     border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
@@ -583,11 +583,11 @@ input[type="range"]::-webkit-slider-thumb:hover {
   /* 画像読み込み前のドロップゾーン (スマホ時) */
   .drop-zone {
     min-height: 100%;
-    padding: 20px;
+    padding: 16px;
   }
   
   .placeholder-title {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
   }
 
   /* 画像読み込み後のドロップゾーン (スマホ時) */
@@ -602,33 +602,193 @@ input[type="range"]::-webkit-slider-thumb:hover {
   }
 
   #preview-canvas {
-    max-height: calc(38vh - 24px); /* 固定プレビュー枠内に完璧に収める */
+    max-height: calc(52vh - 20px); /* 拡張した画像枠内に完璧に収める */
     width: auto !important; /* 縦横比を維持 */
     height: auto !important;
     object-fit: contain;
   }
 
   .dimensions-tag {
-    display: none; /* スマホ時は画面が狭いため、サイズタグは非表示にして領域を最大化 */
+    display: none; /* スマホ時は非表示 */
   }
 
-  /* 下部：独立スクロールコントロールエリア (画面の残りすべて) */
+  /* 下部：独立スクロールコントロールエリア (パディングとマージンを限界まで追い込んで高さを節約) */
   .workspace-right {
     width: 100%;
     flex: 1;
-    overflow-y: auto; /* コントロール群だけを単独で縦スクロールさせる！ */
-    padding: 16px 20px 40px 20px; /* 下部に少し多めの余白を取りスクロールしやすく */
+    overflow-y: auto; /* コントロール群だけを単独で縦スクロール */
+    padding: 10px 16px 24px 16px; /* 上下の無駄な余白を大幅に削減 */
     background: var(--bg-color);
-    -webkit-overflow-scrolling: touch; /* iOSでの慣性スクロールを有効化 */
+    -webkit-overflow-scrolling: touch; /* iOSでの慣性スクロール */
   }
 
   .control-panel {
-    box-shadow: none; /* 不要な影を削除 */
+    box-shadow: none;
   }
-  
-  /* スマホでの各チャンネルカードの余白調整 */
+
+  .panel-header {
+    margin-bottom: 10px; /* 余白を20pxから10pxへ追い込み */
+  }
+
+  .divider {
+    margin: 10px 0; /* 区切り線の上下余白を20pxから10pxへ追い込み */
+  }
+
+  .control-item {
+    margin-bottom: 8px; /* 16pxから8pxへ半減 */
+  }
+
+  .control-label {
+    margin-bottom: 4px; /* ラベル下マージンも圧縮 */
+    font-size: 0.8rem;
+  }
+
+  select {
+    padding: 8px 12px; /* セレクトボックスの内側余白をスリム化 */
+    font-size: 0.85rem;
+  }
+
+  .slider-header {
+    margin-bottom: 2px; /* スライダー上のマージンを圧縮 */
+    font-size: 0.8rem;
+  }
+
+  /* スマホでの各チャンネルカードの余白とギャップを徹底的に圧縮 */
   .channel-card {
-    padding: 12px;
-    margin-top: 12px;
+    padding: 8px 12px; /* 16px -> 8px 12px にスリム化 */
+    margin-top: 8px; /* 15px -> 8px に圧縮 */
+    border-radius: 10px;
+  }
+
+  .channel-header {
+    margin-bottom: 6px; /* 12px -> 6px に圧縮 */
+  }
+
+  .channel-title {
+    font-size: 0.85rem;
+  }
+
+  .channel-body {
+    gap: 6px; /* スライダー同士の隙間を12pxから6pxへ半減 */
   }
 }
+
+/* ==========================================================================
+   保存モーダル用プレミアムデザイン (スマホ長押し保存対応)
+   ========================================================================== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 2000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  padding: 20px;
+}
+
+.modal-overlay.active {
+  opacity: 1;
+}
+
+.modal-content {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.25), inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 500px;
+  padding: 30px 24px 24px 24px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: scale(0.9) translateY(20px);
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.modal-overlay.active .modal-content {
+  transform: scale(1) translateY(0);
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  font-size: 1.8rem;
+  color: var(--text-sub);
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  transition: var(--transition);
+}
+
+.modal-close-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-main);
+}
+
+.modal-header-text {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.modal-header-text h4 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+
+.modal-header-text p {
+  font-size: 0.75rem;
+  color: var(--text-sub);
+  font-weight: 500;
+}
+
+.modal-image-container {
+  width: 100%;
+  background: #000000;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  max-height: 55vh;
+}
+
+.modal-image-container img {
+  max-width: 100%;
+  max-height: 55vh;
+  display: block;
+  object-fit: contain;
+  -webkit-touch-callout: default; /* iOSでの長押しメニューを強制的に許可 */
+  pointer-events: auto; /* タッチイベントを有効化 */
+}
+
+.modal-action-btn {
+  width: 100%;
+  padding: 12px;
+  font-size: 0.9rem;
+  border-radius: 10px;
+}
+

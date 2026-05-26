@@ -12,6 +12,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const previewCanvas = document.getElementById('preview-canvas');
   const imageDimensions = document.getElementById('image-dimensions');
   
+  // 保存モーダル関連要素
+  const saveModal = document.getElementById('save-modal');
+  const modalPreviewImage = document.getElementById('modal-preview-image');
+  const btnCloseModal = document.getElementById('btn-close-modal');
+  const btnCloseModalBottom = document.getElementById('btn-close-modal-bottom');
+
   const btnReset = document.getElementById('btn-reset');
   const btnDownload = document.getElementById('btn-download');
   const selectBlend = document.getElementById('select-blend');
@@ -139,6 +145,30 @@ document.addEventListener('DOMContentLoaded', () => {
         inputHalftoneSize.disabled = false;
       }
     }
+  }
+
+  // モバイル（スマホ・タブレット）環境の判定
+  function isMobileDevice() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+           (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
+  }
+
+  // 保存用モーダルの制御
+  function showSaveModal(dataUrl) {
+    saveModal.style.display = 'flex';
+    // クラス追加を別フレームに逃がしてトランジションを確実に動作させる
+    requestAnimationFrame(() => {
+      saveModal.classList.add('active');
+    });
+    modalPreviewImage.src = dataUrl;
+  }
+
+  function hideSaveModal() {
+    saveModal.classList.remove('active');
+    setTimeout(() => {
+      saveModal.style.display = 'none';
+      modalPreviewImage.src = ''; // メモリ解放
+    }, 300); // CSS transition時間に同期
   }
 
   // 画像ファイルの読み込みと判定
@@ -556,12 +586,19 @@ document.addEventListener('DOMContentLoaded', () => {
       outCtx.globalAlpha = 1.0;
       outCtx.globalCompositeOperation = 'source-over';
 
-      // ダウンロード保存処理
+      // ダウンロード・保存処理
       const dataUrl = outputCanvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.download = 'rgb_shifted_artwork.png';
-      link.href = dataUrl;
-      link.click();
+
+      if (isMobileDevice()) {
+        // モバイル環境：長押し保存用モーダルを表示
+        showSaveModal(dataUrl);
+      } else {
+        // デスクトップ環境：自動ダウンロードを実行
+        const link = document.createElement('a');
+        link.download = 'rgb_shifted_artwork.png';
+        link.href = dataUrl;
+        link.click();
+      }
 
       btnDownload.disabled = false;
       btnDownload.textContent = 'SAVE';
@@ -624,4 +661,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 保存ボタン
   btnDownload.addEventListener('click', downloadHighResImage);
+
+  // 保存用モーダルの閉じる操作のバインド
+  btnCloseModal.addEventListener('click', hideSaveModal);
+  btnCloseModalBottom.addEventListener('click', hideSaveModal);
+  saveModal.addEventListener('click', (e) => {
+    if (e.target === saveModal) {
+      hideSaveModal();
+    }
+  });
 });
