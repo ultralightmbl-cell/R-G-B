@@ -515,18 +515,120 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 
-/* レスポンシブ対応 */
+/* ==========================================================================
+   スマートフォン・タブレット向け極上レスポンシブ設計 (上下スプリット独立スクロール)
+   ========================================================================== */
+
+/* タブレット〜小型PC：2カラムの幅バランス調整 */
 @media (max-width: 1100px) {
-  .workspace-layout {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
   .workspace-right {
+    width: 340px;
+  }
+}
+
+/* スマートフォン縦画面（800px以下）：上下スプリット・独立スクロールUI */
+@media (max-width: 800px) {
+  body {
+    padding: 0;
+    overflow: hidden; /* 画面全体のスクロールを完全に禁止 */
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .app-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
     width: 100%;
   }
-  
+
+  .app-header {
+    margin-bottom: 0;
+    padding: 12px 0 8px 0;
+    background: #ffffff;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    flex-shrink: 0; /* ヘッダーの高さを固定 */
+  }
+
+  .main-title-logo {
+    height: 2.8rem !important; /* スマホ時はロゴをやや小ぶりに（上品に） */
+    width: 8.56rem !important;  /* アスペクト比を維持 */
+  }
+
+  .workspace-layout {
+    flex-direction: column; /* 縦並び */
+    gap: 0;
+    flex: 1;
+    overflow: hidden; /* レイアウト崩れを防ぐ */
+    height: calc(100vh - 60px); /* ヘッダーを除いた全画面高さ */
+  }
+
+  /* 上部：固定プレビューエリア (画面の38%) */
+  .workspace-left {
+    width: 100%;
+    height: 38vh;
+    max-height: 38vh;
+    background: #ffffff;
+    padding: 12px;
+    z-index: 100;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* 画像読み込み前のドロップゾーン (スマホ時) */
   .drop-zone {
-    min-height: 350px;
+    min-height: 100%;
+    padding: 20px;
+  }
+  
+  .placeholder-title {
+    font-size: 1.1rem;
+  }
+
+  /* 画像読み込み後のドロップゾーン (スマホ時) */
+  .drop-zone.has-image {
+    max-height: 100%;
+    max-width: 100%;
+    border: 1px dashed rgba(0, 0, 0, 0.15);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  }
+
+  #preview-canvas {
+    max-height: calc(38vh - 24px); /* 固定プレビュー枠内に完璧に収める */
+    width: auto !important; /* 縦横比を維持 */
+    height: auto !important;
+    object-fit: contain;
+  }
+
+  .dimensions-tag {
+    display: none; /* スマホ時は画面が狭いため、サイズタグは非表示にして領域を最大化 */
+  }
+
+  /* 下部：独立スクロールコントロールエリア (画面の残りすべて) */
+  .workspace-right {
+    width: 100%;
+    flex: 1;
+    overflow-y: auto; /* コントロール群だけを単独で縦スクロールさせる！ */
+    padding: 16px 20px 40px 20px; /* 下部に少し多めの余白を取りスクロールしやすく */
+    background: var(--bg-color);
+    -webkit-overflow-scrolling: touch; /* iOSでの慣性スクロールを有効化 */
+  }
+
+  .control-panel {
+    box-shadow: none; /* 不要な影を削除 */
+  }
+  
+  /* スマホでの各チャンネルカードの余白調整 */
+  .channel-card {
+    padding: 12px;
+    margin-top: 12px;
   }
 }
