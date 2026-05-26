@@ -792,3 +792,57 @@ input[type="range"]::-webkit-slider-thumb:hover {
   border-radius: 10px;
 }
 
+/* ==========================================================================
+   画像変更用フロートボタンデザイン (CHANGE IMAGE)
+   ========================================================================== */
+#canvas-container {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.btn-change-image {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  z-index: 105;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--text-main);
+  font-family: var(--font-family);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  transition: var(--transition);
+}
+
+.btn-change-image:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.btn-change-image:active {
+  transform: translateY(1px);
+}
+
+/* スマホ表示時 (プレビューエリアが52vh固定の際) の配置微調整 */
+@media (max-width: 800px) {
+  .btn-change-image {
+    bottom: 8px;
+    right: 8px;
+    padding: 5px 10px;
+    font-size: 0.7rem;
+  }
+}
+
+

@@ -12,6 +12,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const previewCanvas = document.getElementById('preview-canvas');
   const imageDimensions = document.getElementById('image-dimensions');
   
+  // 画像変更フロートボタン
+  const btnChangeImage = document.getElementById('btn-change-image');
+
   // 保存モーダル関連要素
   const saveModal = document.getElementById('save-modal');
   const modalPreviewImage = document.getElementById('modal-preview-image');
@@ -661,6 +664,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 保存ボタン
   btnDownload.addEventListener('click', downloadHighResImage);
+
+  // 画像変更ボタンのバインド
+  btnChangeImage.addEventListener('click', (e) => {
+    e.stopPropagation(); // バブルアップを防止
+    fileInput.click();
+  });
 
   // 保存用モーダルの閉じる操作のバインド
   btnCloseModal.addEventListener('click', hideSaveModal);
