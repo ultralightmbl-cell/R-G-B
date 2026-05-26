@@ -72,8 +72,8 @@ body {
 }
 
 .main-title-logo {
-  height: 4.62rem; /* ロゴを140%（3.3rem ➡ 4.62rem ≒ 約74px）に拡大 */
-  width: auto;
+  height: 4.62rem !important; /* GitHubなどの共通CSS(img { max-width: 100%; height: auto; })による上書きを防ぐため !important で固定 */
+  width: 14.12rem !important;  /* アスペクト比 3.05:1 を元に横幅も明示的に固定し、インライン伸長バグを完全に防止 */
   display: inline-block;
   vertical-align: middle;
   transition: var(--transition);
