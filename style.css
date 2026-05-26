@@ -1,0 +1,66 @@
+/* ==========================================================================
+   【ステップ1】RGB Shifter用 最小構成ダークスタイルシート
+   ========================================================================== */
+
+body {
+  font-family: sans-serif;
+  padding: 20px;
+  line-height: 1.5;
+  background-color: #111116; /* 加法混色に必須の暗い背景 */
+  color: #eeeeee;
+}
+
+h1, p {
+  color: #ffffff;
+}
+
+.drop-zone {
+  border: 3px dashed #444455;
+  padding: 40px;
+  text-align: center;
+  background-color: #1a1a24;
+  cursor: pointer;
+  margin-bottom: 20px;
+  color: #aaaaaa;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.drop-zone.drag-over {
+  border-color: #5555ff;
+  background-color: #222235;
+  color: #ffffff;
+}
+
+.control-group {
+  padding: 10px;
+  border: 1px solid #444;
+  background-color: #2a2a35;
+  color: #ffffff;
+}
+
+.control-group h4 {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+#preview-canvas {
+  background-color: #000000; /* キャンバスのベースは完全な暗闇 */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+button {
+  padding: 6px 12px;
+  background: #444;
+  color: #fff;
+  border: 1px solid #555;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  background: #555;
+}
+
+button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}

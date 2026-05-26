@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>【ステップ1】RGB Shifter — 動作検証プロトタイプ</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>RGB Shifter — 動作検証プロトタイプ（ステップ1）</h1>
+  <p>画像のRGB（赤、緑、青）チャンネルを分解し、それぞれの光の版をずらして美しい色収差（グリッチ）エフェクトを作成するモデルです。</p>
+
+  <div style="display: flex; gap: 20px; align-items: flex-start;">
+    <!-- 左側：入力とプレビューエリア -->
+    <div style="flex: 1;">
+      <!-- ドラッグ＆ドロップエリア -->
+      <div id="drop-zone" class="drop-zone">
+        <p>ここに画像をドラッグ＆ドロップ</p>
+        <p>または</p>
+        <input type="file" id="file-input" accept="image/*">
+      </div>
+
+      <!-- キャンバス表示エリア -->
+      <div id="canvas-container" style="margin-top: 20px; display: none;">
+        <h3>プレビューキャンバス（黒背景）</h3>
+        <canvas id="preview-canvas" style="border: 1px solid #555; max-width: 100%; height: auto;"></canvas>
+        <p id="image-dimensions"></p>
+      </div>
+    </div>
+
+    <!-- 右側：コントローラーエリア -->
+    <div style="width: 320px; padding: 15px; border: 1px solid #555; background: #222; color: #fff;">
+      <h3>コントローラー</h3>
+      <button id="btn-reset" disabled>リセット</button>
+      <button id="btn-download" style="margin-left: 10px;" disabled>保存する</button>
+      
+      <hr style="border-color: #444;">
+
+      <!-- 重なり効果（ブレンドモード）選択 -->
+      <div style="margin-bottom: 15px;">
+        <label><strong>重なり効果 (ブレンド):</strong></label><br>
+        <select id="select-blend" disabled style="width: 100%; padding: 6px; margin-top: 5px; background: #333; color: #fff; border: 1px solid #555;">
+          <option value="screen" selected>スクリーン (標準・光の重なり)</option>
+          <option value="lighter">加算 (より明るい重ね合わせ)</option>
+          <option value="difference">差の絶対値 (サイケデリック反転)</option>
+        </select>
+      </div>
+
+      <hr style="border-color: #444;">
+
+      <!-- RED -->
+      <div class="control-group">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h4 style="margin: 0; color: #ff5555;">レッド / Red (R)</h4>
+          <label><input type="checkbox" id="visible-r" checked disabled> 表示</label>
+        </div>
+        <div style="margin-top: 8px;">
+          <label>X軸ずらし: <span id="val-rx">0</span>px</label><br>
+          <input type="range" id="shift-rx" min="-50" max="50" value="0" disabled style="width: 100%;">
+        </div>
+        <div>
+          <label>Y軸ずらし: <span id="val-ry">0</span>px</label><br>
+          <input type="range" id="shift-ry" min="-50" max="50" value="0" disabled style="width: 100%;">
+        </div>
+        <div>
+          <label>透明度: <span id="val-ro">100</span>%</label><br>
+          <input type="range" id="shift-ro" min="0" max="100" value="100" disabled style="width: 100%;">
+        </div>
+      </div>
+
+      <!-- GREEN -->
+      <div class="control-group" style="margin-top: 15px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h4 style="margin: 0; color: #55ff55;">グリーン / Green (G)</h4>
+          <label><input type="checkbox" id="visible-g" checked disabled> 表示</label>
+        </div>
+        <div style="margin-top: 8px;">
+          <label>X軸ずらし: <span id="val-gx">0</span>px</label><br>
+          <input type="range" id="shift-gx" min="-50" max="50" value="0" disabled style="width: 100%;">
+        </div>
+        <div>
+          <label>Y軸ずらし: <span id="val-gy">0</span>px</label><br>
+          <input type="range" id="shift-gy" min="-50" max="50" value="0" disabled style="width: 100%;">
+        </div>
+        <div>
+          <label>透明度: <span id="val-go">100</span>%</label><br>
+          <input type="range" id="shift-go" min="0" max="100" value="100" disabled style="width: 100%;">
+        </div>
+      </div>
+
+      <!-- BLUE -->
+      <div class="control-group" style="margin-top: 15px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h4 style="margin: 0; color: #5555ff;">ブルー / Blue (B)</h4>
+          <label><input type="checkbox" id="visible-b" checked disabled> 表示</label>
+        </div>
+        <div style="margin-top: 8px;">
+          <label>X軸ずらし: <span id="val-bx">0</span>px</label><br>
+          <input type="range" id="shift-bx" min="-50" max="50" value="0" disabled style="width: 100%;">
+        </div>
+        <div>
+          <label>Y軸ずらし: <span id="val-by">0</span>px</label><br>
+          <input type="range" id="shift-by" min="-50" max="50" value="0" disabled style="width: 100%;">
+        </div>
+        <div>
+          <label>透明度: <span id="val-bo">100</span>%</label><br>
+          <input type="range" id="shift-bo" min="0" max="100" value="100" disabled style="width: 100%;">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
