@@ -66,19 +66,21 @@ body {
 }
 
 .app-header {
-  margin-bottom: 35px;
+  margin-bottom: 42px; /* ヘッダーの余白（高さ）を120%（35px ➡ 42px）に拡大して空気感を確保 */
+  padding-top: 10px;
   text-align: center;
 }
 
-.main-title {
-  font-family: 'Montserrat', "Outfit", sans-serif;
-  font-size: 3.3rem; /* 級数を約5px（0.5rem）引き下げ */
-  font-weight: 700; /* 強力なアイデンティティを生む BOLD (ウェイト 700) */
-  color: #000000;
-  letter-spacing: 0.1em; /* 太字の力強さに合わせた美しいカーニング */
-  text-transform: uppercase;
-  margin-right: -0.1em; /* 完全な中央寄せのためにletter-spacing分を相殺 */
+.main-title-logo {
+  height: 4.62rem; /* ロゴを140%（3.3rem ➡ 4.62rem ≒ 約74px）に拡大 */
+  width: auto;
   display: inline-block;
+  vertical-align: middle;
+  transition: var(--transition);
+}
+
+.main-title-logo:hover {
+  transform: scale(1.04); /* ホバー時にふわりと心地よく微小拡大 */
 }
 
 .workspace-layout {
