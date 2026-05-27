@@ -564,13 +564,13 @@ input[type="range"]::-webkit-slider-thumb:hover {
     height: calc(100vh - 60px); /* ヘッダーを除いた全画面高さ */
   }
 
-  /* 上部：固定プレビューエリア (画面の52%に拡張して迫力をアップ！) */
+  /* 上部：固定プレビューエリア (画面の58%にさらに拡張して迫力を最大化！) */
   .workspace-left {
     width: 100%;
-    height: 52vh;
-    max-height: 52vh;
+    height: 58vh;
+    max-height: 58vh;
     background: #ffffff;
-    padding: 10px;
+    padding: 8px;
     z-index: 100;
     border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
@@ -602,7 +602,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   }
 
   #preview-canvas {
-    max-height: calc(52vh - 20px); /* 拡張した画像枠内に完璧に収める */
+    max-height: calc(58vh - 20px); /* 58vh枠内に完璧に収める */
     width: auto !important; /* 縦横比を維持 */
     height: auto !important;
     object-fit: contain;
@@ -612,14 +612,15 @@ input[type="range"]::-webkit-slider-thumb:hover {
     display: none; /* スマホ時は非表示 */
   }
 
-  /* 下部：独立スクロールコントロールエリア (パディングとマージンを限界まで追い込んで高さを節約) */
+  /* 下部：独立スクロールコントロールエリア (80〜90%に全体をギュッと縮小！) */
   .workspace-right {
     width: 100%;
     flex: 1;
     overflow-y: auto; /* コントロール群だけを単独で縦スクロール */
-    padding: 10px 16px 24px 16px; /* 上下の無駄な余白を大幅に削減 */
+    padding: 8px 12px 20px 12px; /* パディングをさらに圧縮 */
     background: var(--bg-color);
     -webkit-overflow-scrolling: touch; /* iOSでの慣性スクロール */
+    font-size: 0.8rem; /* 文字サイズを全体的に縮小 (約85%縮小) */
   }
 
   .control-panel {
@@ -627,49 +628,83 @@ input[type="range"]::-webkit-slider-thumb:hover {
   }
 
   .panel-header {
-    margin-bottom: 10px; /* 余白を20pxから10pxへ追い込み */
+    margin-bottom: 6px; /* さらにマージンを圧縮 */
+  }
+
+  .panel-title {
+    font-size: 0.95rem; /* タイトルもスリム化 */
   }
 
   .divider {
-    margin: 10px 0; /* 区切り線の上下余白を20pxから10pxへ追い込み */
+    margin: 8px 0; /* デバイダーのマージンもさらに圧縮 */
   }
 
   .control-item {
-    margin-bottom: 8px; /* 16pxから8pxへ半減 */
+    margin-bottom: 6px; /* さらに圧縮 */
   }
 
   .control-label {
-    margin-bottom: 4px; /* ラベル下マージンも圧縮 */
-    font-size: 0.8rem;
+    margin-bottom: 2px;
+    font-size: 0.72rem;
   }
 
   select {
-    padding: 8px 12px; /* セレクトボックスの内側余白をスリム化 */
-    font-size: 0.85rem;
+    padding: 6px 10px; /* セレクトボックスをさらに極小化 */
+    font-size: 0.78rem;
+    border-radius: 8px;
   }
 
   .slider-header {
-    margin-bottom: 2px; /* スライダー上のマージンを圧縮 */
-    font-size: 0.8rem;
+    margin-bottom: 1px;
+    font-size: 0.72rem;
   }
 
-  /* スマホでの各チャンネルカードの余白とギャップを徹底的に圧縮 */
+  /* カスタムスライダーのつまみ自体もコンパクト化 */
+  input[type="range"] {
+    height: 3px; /* スライダーバーをより細く */
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    width: 12px; /* スライダーつまみを16pxから12pxへ縮小 (約75%) */
+    height: 12px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  }
+
+  /* スマホでの各チャンネルカードの余白とギャップを極限まで縮小 */
   .channel-card {
-    padding: 8px 12px; /* 16px -> 8px 12px にスリム化 */
-    margin-top: 8px; /* 15px -> 8px に圧縮 */
-    border-radius: 10px;
+    padding: 6px 10px; /* パディングを極小化 (6px 10px) */
+    margin-top: 6px; /* マージンをさらに圧縮 */
+    border-radius: 8px; /* 丸みも少しスリムに */
   }
 
   .channel-header {
-    margin-bottom: 6px; /* 12px -> 6px に圧縮 */
+    margin-bottom: 4px; /* ヘッダー下のマージンを圧縮 */
   }
 
   .channel-title {
-    font-size: 0.85rem;
+    font-size: 0.78rem;
   }
 
   .channel-body {
-    gap: 6px; /* スライダー同士の隙間を12pxから6pxへ半減 */
+    gap: 4px; /* スライダー間の隙間をさらに4pxに圧縮！ */
+  }
+
+  /* トグルスイッチのスリム化 */
+  .toggle-slider {
+    width: 26px;
+    height: 14px;
+    border-radius: 7px;
+  }
+
+  .toggle-slider::before {
+    height: 10px;
+    width: 10px;
+    left: 2px;
+    bottom: 2px;
+  }
+
+  .toggle-switch input:checked + .toggle-slider::before {
+    transform: translateX(12px);
   }
 }
 
@@ -793,7 +828,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 /* ==========================================================================
-   画像変更用フロートボタンデザイン (CHANGE IMAGE)
+   アクションフロートバー ＆ フロートボタンデザイン (画像上配置)
    ========================================================================== */
 #canvas-container {
   position: relative;
@@ -801,47 +836,76 @@ input[type="range"]::-webkit-slider-thumb:hover {
   width: 100%;
 }
 
-.btn-change-image {
+.action-float-bar {
   position: absolute;
-  bottom: 12px;
-  right: 12px;
+  bottom: 14px;
+  right: 14px;
   z-index: 105;
-  background: rgba(255, 255, 255, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  display: flex;
+  gap: 8px;
+}
+
+.btn-float {
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.45);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   color: var(--text-main);
   font-family: var(--font-family);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.03em;
-  padding: 6px 12px;
+  letter-spacing: 0.04em;
+  padding: 7px 14px;
   border-radius: 20px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.25);
   transition: var(--transition);
 }
 
-.btn-change-image:hover {
-  background: rgba(255, 255, 255, 0.9);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+.btn-float svg {
+  stroke-width: 2.2px;
+  transition: transform 0.2s ease;
 }
 
-.btn-change-image:active {
-  transform: translateY(1px);
+.btn-float:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.95);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
 }
 
-/* スマホ表示時 (プレビューエリアが52vh固定の際) の配置微調整 */
+.btn-float:hover:not(:disabled) svg {
+  transform: scale(1.05);
+}
+
+.btn-float:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-float:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* スマホ表示時 (中央下部に並べて配置、サイズ調整) */
 @media (max-width: 800px) {
-  .btn-change-image {
-    bottom: 8px;
-    right: 8px;
-    padding: 5px 10px;
-    font-size: 0.7rem;
+  .action-float-bar {
+    bottom: 10px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%); /* スマホ時は画面中央にバランスよく配置 */
+    width: auto;
+    gap: 6px;
+    justify-content: center;
+  }
+
+  .btn-float {
+    padding: 6px 12px;
+    font-size: 0.68rem;
+    border-radius: 16px;
   }
 }
 
